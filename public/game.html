@@ -1,0 +1,73 @@
+<html>
+<head>
+<style>
+html, body {
+	display: block;
+	width: 100%;
+	height: 100%;
+	margin: 0px;
+	padding: 0px;
+}
+
+canvas {
+	display: block;
+	margin: 0px;
+	padding: 0px;
+	background: black;
+}
+
+.vouter {
+	display: table;
+	height: 100%;
+	width: 100%;
+}
+
+.vmiddle {
+	display: table-cell;
+	vertical-align: middle;
+}
+
+.hmiddle {
+	text-align: center;
+}
+
+.hinner {
+	display: inline-block;
+}
+
+#inputdiv {
+	display: inline-block;
+	width: 800px;
+	height: 600px;
+	background-color: grey;
+	border-radius: 10px;
+}
+</style>
+<script src="/jquery.js"></script>
+<script src="/socket.io.js"></script>
+<script src="/socket.js"></script>
+<script src="/reload-client.js"></script>
+<script src="/fpsmeter.js"></script>
+<script src="/game-client.js"></script>
+</head>
+<body style="background: #333333">
+<div id="div_enter" class="vouter">
+	<div class="vmiddle">
+		<div class="hmiddle">
+			<div id="inputdiv" class="hinner">
+				<div class="vouter">
+					<div class="vmiddle">
+						<div class="hmiddle">
+							<div class="hinner">
+								<input id="text_name" type="text" style="width:400px;height:100px;font-size:70px;border-radius:10px;" placeholder="Name"></input><br>
+								<input id="button_name" type="button" style="width:400px;height:100px;font-size:70px;border-radius:10px;" value="Enter"></input><br>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+</html>
