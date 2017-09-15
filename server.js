@@ -1,6 +1,5 @@
 var http = require('http');
 var express = require('express');
-var bodyParser = require('body-parser');
 var socketio = require('socket.io');
 var watch = require('node-watch');;
 
@@ -19,8 +18,6 @@ app.use(function(err, req, res, next) {
 	console.log(error.stack);
 	res.status(500).send("Something broke! xd");
 });
-
-//app.use(bodyParser.json());
 
 app.get('/', function(req, res) {
 	res.sendFile(publicDir + "index.html");

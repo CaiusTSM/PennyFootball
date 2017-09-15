@@ -169,24 +169,17 @@ function stepCoinPhysics(timeStep) {
 		}
 	}
 	
-	var newCoinValues = [];
 	for (var i = 0; i < collisions.length; ++i) {
 		var collision = collisions[i];
-		var coinX = coins[collision.indexA].x;
-		var coinY = coins[collision.indexA].y;
-		var coinVX = coins[collision.indexA].vx;
-		var coinVY = coins[collision.indexA].vy;
-		var otherCoinX = coins[collision.indexB].x;
-		var otherCoinY = coins[collision.indexB].y;
-		var otherCoinVX = coins[collision.indexB].vx;
-		var otherCoinVY = coins[collision.indexB].vy;
+		var coin = coins[collision.indexA];
+		var otherCoin = coins[collision.indexB];
 		
 		var dxn = collision.dx / collision.mag;
 		var dyn = collision.dy / collision.mag;
 		
 		// Relative velocity
-		var dvx = otherCoinVX - coinVX;
-		var dvy = otherCoinVY - coinVY;
+		var dvx = otherCoin.vx - coin.vx;
+		var dvy = otherCoin.vy - coin.vy;
 		
 		// Dot product of relative velocity and normal
 		var rvAlongNormal = dvx * dxn + dvy * dyn;
@@ -196,14 +189,6 @@ function stepCoinPhysics(timeStep) {
 		var impulse = -rvAlongNormal;
 		// Dot product of velocity and normal
 		//var impulse = coin.vx * dxn + coin.vy * dyn - otherCoin.vx * dxn - otherCoin.vy * dyn;
-		
-		newCoinValues.push(
-			{
-				index: collision.indexA,
-				vx: coin.vx - impulse * dxn,
-				vy: coin.vy - impulse * xyn
-			}
-		);
 		
 		coin.vx -= impulse * dxn;
 		coin.vy -= impulse * dyn;
