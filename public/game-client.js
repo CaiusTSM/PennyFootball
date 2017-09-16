@@ -20,6 +20,7 @@ var boardWidth = 0;
 var boardHeight = 0;
 
 var coins = [];
+var rects = [];
 
 var fpsmeter = null;
 
@@ -93,6 +94,20 @@ function coin_clone(coin) {
 	};
 }
 
+function Rect() {
+	var x = 0.0;
+	var y = 0.0;
+	var width = 0.0;
+	var height = 0.0;
+	
+	return {
+		x: x,
+		y: y,
+		width: width,
+		height: height
+	};
+};
+
 function Collision() {
 	var indexA = 0;
 	var indexB = 0;
@@ -109,6 +124,17 @@ function Collision() {
 		mag: mag,
 		combinedRadii: combinedRadii
 	};
+}
+
+function renderRects() {
+	var canvasViewRatio = canvasMax / viewMax;
+	
+	for (var i = 0; i < rects.length; ++i) {
+		var rect = rects[i];
+		
+		ctx.fillStyle = "#666666";
+		ctx.fillRect(rect.x * canvasViewRatio, rect.y * canvasViewRatio, rect.width * canvasViewRatio, rect.height * canvasViewRatio);
+	}
 }
 
 function renderCoins() {
@@ -207,6 +233,45 @@ function stepCoinPhysics(timeStep) {
 		otherCoin.y += correctionY;
 	}
 	
+	// Collision with rectangles
+	for (var i = 0; i < rects.length; ++i) {
+		var rect = rects[i];
+		for (var j = 0; j < coins.length; ++j) {
+			var coin = coins[j];
+			
+			var edgeX = Math.max(Math.min(coin.x, rect.x + rect.width), rect.x);
+			var edgeY = Math.max(Math.min(coin.y, rect.y + rect.height), rect.y);
+			
+			var dx = coin.x - edgeX;
+			var dy = coin.y - edgeY;
+			
+			var mag = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
+			
+			if (mag < coin.r) {
+				var dxn = dx / mag;
+				var dyn = dy / mag;
+				
+				// Relative velocity
+				var dvx = -coin.vx;
+				var dvy = -coin.vy;
+				
+				// Dot product of relative velocity and normal
+				var rvAlongNormal = dvx * dxn + dvy * dyn;
+				
+				if (rvAlongNormal < 0) { continue; }
+				
+				var impulse = -rvAlongNormal;
+				
+				coin.vx -= impulse * dxn;
+				coin.vy -= impulse * dyn;
+				
+				var penetrationDepth = Math.max(coin.r - mag, 0);
+				coin.x += dxn * penetrationDepth;
+				coin.y += dyn * penetrationDepth;
+			}
+		}
+	}
+	
 	for (var i = 0; i < coins.length; ++i) {
 		var coin = coins[i];
 		// Check collision with walls
@@ -225,7 +290,7 @@ function stepCoinPhysics(timeStep) {
 		}
 		else if (coin.y + coin.r > boardHeight) {
 			coin.y = boardHeight - coin.r;
-			coin.vy = -coin.vy * 0.8;
+			coin.vy = -coin.vy * 0.5;
 		}
 	}
 }
@@ -252,6 +317,7 @@ function tick(timeStep) {
 
 function render() {
 	ctx.beginPath();
+	renderRects();
 	renderCoins();
 }
 
@@ -326,15 +392,22 @@ function game_init() {
 	boardHeight = 10;
 	
 	coins = [];
-	for (var i = 0; i < 200; ++i) {
-		var coin = new Coin();
-		coin.x = Math.random() * boardWidth;
-		coin.y = Math.random() * boardHeight;
-		coin.vx = Math.random() * boardWidth / 4.0 - Math.random() * boardWidth / 4.0;
-		coin.vy = 0.0;
-		coin.ay = 0.05;
-		coin.r = 0.15
-		coins.push(coin);
+	for (var y = 0; y < 10; ++y) {
+		for (var x = 0; x < 10; ++x) {
+			var coin = new Coin();
+			coin.r = 0.15;
+			
+			coin.x = x * coin.r * 2.0 + 2.0 + coin.r + Math.random() * 0.001;
+			coin.y = y * coin.r * 2.0;
+			
+			coin.vx = 0.0;
+			coin.vy = 0.0;
+			
+			coin.ax = 0.0;
+			coin.ay = 0.05;
+			
+			coins.push(coin);
+		}
 	}
 	
 	fpsmeter = new FPSMeter({decimals: 0, graph: true, theme: "dark", left: "5px"});
@@ -358,6 +431,32 @@ function game_init() {
 		mousePos.y = mousePos.y / canvasMax * viewMax;
 	});
 	
+	var r = new Rect();
+	
+	r.x = 2.0;
+	r.y = 5.0;
+	r.width = 4.0;
+	r.height = 0.2;
+	
+	rects.push(r);
+	
+	r = new Rect();
+	
+	r.x = 1.8;
+	r.y = 0.0;
+	r.width = 0.2;
+	r.height = 5.2;
+	
+	rects.push(r);
+	
+	r = new Rect();
+	
+	r.x = 5.2;
+	r.y = 0.0;
+	r.width = 0.2;
+	r.height = 4.5;
+	
+	rects.push(r);
 	
 	timer.start();
 	requestAnimationFrame(loop);
