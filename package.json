@@ -1,0 +1,10 @@
+{
+	"scripts" : {
+    	"start" : "nodemon ./app.js --ignore 'public/*.js'"
+	},
+	"repository" : {
+		"type" : "git",
+		"url" : "https://github.com/CaiusTSM/PennyFootball.git"
+	},
+	"license" : "MIT"
+}
