@@ -2,7 +2,7 @@ var Authenticator = function(app, database, validator) {
 	// RPC functions called by client
 	
 	this.login = function(req, res) {
-		console.log("POST " + JSON.stringify(req.body));
+		console.log("Login: " + JSON.stringify(req.body));
 		
 		if ("username" in req.body && "password" in req.body) {
 			var username = req.body.username;
@@ -24,6 +24,10 @@ var Authenticator = function(app, database, validator) {
 						res.end();
 					}
 				});
+			}
+			else {
+				res.status(401);
+				res.end();
 			}
 		}
 		else {

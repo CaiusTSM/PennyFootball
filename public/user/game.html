@@ -1,0 +1,246 @@
+<html>
+	<head>
+		<meta charset="utf-8">
+	    <meta name="viewport" content="width=device-width">
+	    <meta name="description" content="Penny Football Project">
+	  	<meta name="author" content="Agile Team 2">
+    	<title>Penny Football</title>
+		<script src="/jquery.js"></script>
+		<script src="/socket.io.js"></script>
+		<script src="/socket.js"></script>
+		<script src="/reload-client.js"></script>
+		<script src="/fpsmeter.js"></script>
+		<script>
+			$(document).ready(function() {
+				var game = new Game();
+				game.init();
+				game.start();
+			});
+			
+			function timestamp() {
+				return window.performance && window.performance.now ? window.performance.now() : new Date().getTime()
+			}
+			
+			var Timer = function() {
+				this.startTime = 0;
+				this.endTime = 0;
+				
+				this.start = function() {
+					this.startTime = timestamp();
+				};
+				
+				this.elapsed = function() {
+					this.endTime = timestamp();
+					var timeDiff = this.endTime - this.startTime;
+					return timeDiff;
+				};
+			}
+			
+			var Game = function() {
+				this.canvas = null;
+				this.ctx = null;
+				
+				this.viewWidth = 20;
+				this.viewHeight = 20;
+				this.viewMax = this.viewWidth;
+				
+				this.canvasWidth = 0;
+				this.canvasHeight = 0;
+				this.canvasMax = this.canvasWidth;
+				
+				this.timer = null;
+				this.timestep = 1.0 / 60.0;
+				this.timePassed = 0;
+				
+				this.fpsmeter = null;
+				
+				this.initialized = false;
+				
+				this.init = function() {
+					// Find the canvas and get the context
+					this.canvas = document.getElementById("gameCanvas");
+					this.ctx = this.canvas.getContext("2d");
+					
+					// Setup the virtual view
+					this.viewWidth = 20;
+					this.viewHeight = 20;
+					if (this.viewWidth > this.viewHeight) {
+						this.viewMax = this.viewWidth;
+					}
+					else {
+						this.viewMax = this.viewHeight;
+					}
+					
+					// Setup the real view according to actual canvas size
+					this.canvas.width = this.canvas.parentElement.clientWidth;
+					this.canvas.height = this.canvas.parentElement.clientHeight;
+					this.canvasWidth = this.canvas.width;
+					this.canvasHeight = this.canvas.height;
+					if (this.canvasWidth > this.canvasHeight) {
+						this.canvasMax = this.canvasWidth;
+					}
+					else {
+						this.canvasMax = this.canvasHeight;
+					}
+					
+					this.timer = new Timer();
+					this.timestep = 1.0 / 60.0;
+					this.timePassed = 0;
+					
+					this.fpsmeter = new FPSMeter({decimals: 0, graph: true, theme: "dark", left: "30%"});
+					
+					this.initialized = true;
+				};
+				
+				this.start = function() {
+					if (this.initialized === true) {
+						this.timer.start();
+						requestAnimationFrame(this.loop);
+					}
+					else {
+						console.log("Error: Started game without initialization.");
+					}
+				};
+				
+				this.loop = function() {
+					this.fpsmeter.tickStart();
+					
+					// Set the real view according to actual canvas size (in loop since the player can resize the window)
+					this.canvas.width = this.canvas.parentElement.clientWidth;
+					this.canvas.height = this.canvas.parentElement.clientHeight;
+					this.canvasWidth = this.canvas.width;
+					this.canvasHeight = this.canvas.height;
+					if (this.canvasWidth > this.canvasHeight) {
+						this.canvasMax = this.canvasWidth;
+					}
+					else {
+						this.canvasMax = this.canvasHeight;
+					}
+					
+					// Compute time passed, restart timer, add to time passed (capped to max 1 second)
+					var dt = this.timer.elapsed() / 1000.0;
+					this.timer.start();
+					this.timePassed += Math.min(1, dt);
+					
+					// tick at fixed timestep
+					while (this.timePassed >= this.timeStep) {
+						this.timePassed -= this.timeStep;
+						this.tick(this.timeStep);
+					}
+					
+					// render at non-fixed timestep (as fast as this loop runs)
+					this.render(dt);
+					
+					this.fpsmeter.tick();
+					
+					requestAnimationFrame(this.loop);
+				}.bind(this);
+				// This bind thing is so "this" still points to the right thing when using requestAnimationFrame
+				
+				// Game logic goes here
+				this.tick = function(dt) {
+					
+				};
+				
+				// Game rendering (drawing) goes here
+				this.render = function(dt) {
+					
+				};
+			};
+		</script>
+		<style>
+			body {
+				width: 100%;
+				height: 100%;
+				
+				margin: 0;
+				padding: 0;
+			}
+		
+			.wrapper {
+				width: 100%;
+				height: 100%;
+				
+				margin: 0;
+				padding: 0;
+				
+				background: #aaa;
+			}
+			
+			.chatDiv {
+				float: left;
+				
+				width: 25%;
+				height: 100%;
+				
+				margin: 0;
+				padding: 0;
+				
+				background: #444;
+			}
+			
+			.gameDiv {
+				float: right;
+				
+				width: 75%;
+				height: 100%;
+				
+				margin: 0;
+				padding: 0;
+				
+				background: #9348f2;
+			}
+			
+			.chatList {
+				width: 100%;
+				height: 85%;
+				
+				margin: 0;
+				padding: 0;
+				
+				background: #eee;
+			}
+			
+			.chatInput {
+				width: 100%;
+				height: 12%;
+				
+				margin: 0;
+				padding: 0;
+				
+				border: none;
+				
+				background: #bbb;
+				
+				font-size: 16;
+			}
+			
+			#chatSubmitButton {
+				width: 100%;
+				height: 3%;
+				
+				background: #575329;
+			}
+			
+			#gameCanvas {
+				margin: 0;
+				padding: 0;
+				
+				background: #222;
+			}
+		</style>
+	</head>
+	
+	<body>
+		<div class="wrapper">
+			<div class="chatDiv">
+				<ul id="chatList" class="chatList"></ul>
+				<textarea class="chatInput" rows="4" cols="50"></textarea>
+				<input type="button" id="chatSubmitButton" value="Send"></input>
+			</div>
+			<div class="gameDiv">
+				<canvas id="gameCanvas"></canvas>
+			</div>
+		</div>
+	</body>
+</html>

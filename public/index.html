@@ -11,12 +11,55 @@
 		<script src="/reload-client.js"></script>
 		<script>
 			$(document).ready(function() {
-				$('#loginForm').submit(function(e) {
-					e.preventDefault();
+				// Add button event listeners
+				$('#loginForm').submit(submitLoginForm);
+				
+				$('#registerForm').submit(submitRegisterForm);
+			});
+			
+			function submitLoginForm(e) {
+				e.preventDefault();
+				
+				login($('#loginUsername').val(), $('#loginPassword').val(), function(status, data) {
+					if (status === 200) {
+						console.log("Login success...");
+						window.location = "/user/home.html";
+					}
+					else if (status === 401) {
+						console.log("Login failure...");
+						$('#loginForm').append("<br><font color='red'>Incorrect username/password.</font>");
+					}
+				});
+			}
+			
+			function submitRegisterForm(e) {
+				e.preventDefault();
 					
-					var username = $('#loginUsername').val();
-					var password = $('#loginPassword').val();
-					
+				register($('#registerUsername').val(), $('#registerPassword').val(), function(status, data) {
+					if (status === 200) {
+						console.log("Register success...");
+						$('#registerForm').append("<br><font color='green'>Register success.</font>");
+						
+						// login($('#registerUsername').val(), $('#registerPassword').val(), function(status, data) {
+						// 	if (status === 200) {
+						// 		console.log("Login success...");
+						// 		window.location = "/user/home.html";
+						// 	}
+						// 	else if (status === 401) {
+						// 		console.log("Login failure...");
+						// 		$('#loginForm').append("<br><font color='red'>Incorrect username/password.</font>");
+						// 	}
+						// } Doesn't seem to work yet.
+					}
+					else if (status === 400) {
+						console.log("Register failure...");
+						$('#registerForm').append("<br><font color='red'>Invalid username/password.</font>");
+					}
+				});
+			}
+			
+			// Reusable, can be put in their own file like api.js or something (contains all functions for making calls to the server)
+			function login(username, password, callback) {
 					$.ajax({
 						url:'/api/login',
 						type:'POST',
@@ -25,42 +68,30 @@
 							password: password
 						},
 						success: function() {
-							console.log("Login success...");
-							window.location = "/user/home.html";
+							callback(200, null);
 						},
 						error: function(data) {
-							if(data.status === 401) {
-								$('#loginForm').append("<br><font color='red'>Incorrect username/password.</font>");
-							}
+							callback(data.status, data);
 						}
 					});
+			}
+			
+			function register(username, password, callback) {
+				$.ajax({
+					url:'/api/register',
+					type:'POST',
+					data: {
+						username: username,
+						password: password
+					},
+					success: function() {
+						callback(200, null);
+					},
+					error: function(data) {
+						callback(data.status, data);
+					}
 				});
-				
-				$('#registerForm').submit(function(e) {
-					e.preventDefault();
-					
-					var username = $('#registerUsername').val();
-					var password = $('#registerPassword').val();
-					
-					$.ajax({
-						url:'/api/register',
-						type:'POST',
-						data: {
-							username: username,
-							password: password
-						},
-						success: function() {
-							console.log("Register success...");
-							$('#registerForm').append("<br><font color='green'>Register success.</font>");
-						},
-						error: function(data) {
-							if(data.status === 400) {
-								$('#registerForm').append("<br><font color='red'>Invalid username/password.</font>");
-							}
-						}
-					});
-				});
-			});
+			}
 		</script>
 		<style>
 			.button1{

@@ -33,7 +33,12 @@ var Database = function(host, user, pass) {
 	
 	this.insertUser = function(username, password, callback) {
 		this.database.query(this.queryInsertNewUser, [username, password], function(err, result) {
-			callback(err);
+			if (err) {
+				callback(0);
+			}
+			else {
+				callback(1);
+			}
 		});
 	};
 	

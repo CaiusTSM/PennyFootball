@@ -1,6 +1,6 @@
 var Registrar = function(app, database, validator) {
-	app.post("/api/register", function(req, res) {
-		console.log("POST " + JSON.stringify(req.body));
+	this.register = function(req, res) {
+		console.log("Register: " + JSON.stringify(req.body));
 	
 		if ("username" in req.body && "password" in req.body) {
 			var username = req.body.username;
@@ -11,11 +11,11 @@ var Registrar = function(app, database, validator) {
 					if (taken === 0) {
 						database.insertUser(username, password, function(success) {
 							if (success === 0) {
-								res.status(200);
+								res.status(400);
 								res.end();
 							}
 							else if (success === 1) {
-								res.status(400);
+								res.status(200);
 								res.end();
 							}
 						});
@@ -30,12 +30,18 @@ var Registrar = function(app, database, validator) {
 					}
 				});
 			}
+			else {
+				res.status(400);
+				res.end();
+			}
 		}
 		else {
 			res.status(400);
 			res.end();
 		}
-	});
+	};
+	
+	app.post("/api/register", this.register);
 };
 
 module.exports = Registrar;
