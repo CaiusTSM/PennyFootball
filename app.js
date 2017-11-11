@@ -6,35 +6,20 @@ var bodyParser = require('body-parser');
 var sessions = require("client-sessions");
 var mysql = require('mysql');
 
-var IP = "0.0.0.0";
-var PORT = 8080;
-
-//var publicDir = "C:/Users/Lucas/Google Drive/agile/public/";
-var publicDir = __dirname + "/public/";
+var Database = require('./src/database.js');
+var Validator = require('./src/validator.js');
+var Registrar = require('./src/registrar.js');
+var Authenticator = require('./src/authenticator.js');
 
 var app = express();
 
-var changed = [];
-
-var users = [];
-
-var database = mysql.createConnection({
-	host: "localhost",
-	user: "root",
-	password: ""
-});
-
-database.connect(function(err) {
-	if (err) throw err;
-	console.log("Connected to database...");
-	database.query("USE penny_football", function (err, result) {
-    	console.log("Using database: penny_football...");
-	});
-});
-
 app.use(bodyParser.urlencoded({ extended: false }));
-
 app.use(bodyParser.json());
+
+app.use(function(err, req, res, next) {
+	console.log(error.stack);
+	res.status(500).send("Something broke! xd");
+});
 
 app.use(sessions({
 	cookieName: 'session',
@@ -43,13 +28,36 @@ app.use(sessions({
 	activeDuration: 1000 * 60 * 5
 }));
 
-app.use(function(err, req, res, next) {
-	console.log(error.stack);
-	res.status(500).send("Something broke! xd");
+var database = new Database("localhost", "root", "");
+var validator = new Validator();
+var registrar = new Registrar(app, database, validator);
+var auth = new Authenticator(app, database, validator);
+
+database.connect(
+function() {
+	console.log("Database is ready...");
+},
+function(err) {
+	console.log("Failed to connect to database.");
+});
+
+var IP = "0.0.0.0";
+var PORT = 8080;
+
+var publicDir = __dirname + "/public/";
+
+var changed = [];
+
+var onlineUsers = ["lucas", "sean", "rh3894h_bob"];
+
+app.get("/onlineUsers", function(req, res) {
+	console.log("Getting user table");
+	res.send({onlineUsers: onlineUsers});
+	res.end();
 });
 
 app.get("/user/*", function(req, res) {
-	if (req.session.authenticated === true) {
+	if (auth.authenticated(req)) {
 		res.status(200);
 		res.sendFile(publicDir + req.url);
 	}
@@ -62,44 +70,6 @@ app.get("/user/*", function(req, res) {
 app.get("/*", function(req, res) {
 	console.log("GET " + req.url);
 	res.sendFile(publicDir + req.url);
-});
-
-app.post("/register", function(req, res) {
-	console.log("POST " + JSON.stringify(req.body));
-	res.status(200);
-	res.end();
-});
-
-app.post("/login", function(req, res) {
-	console.log("POST " + JSON.stringify(req.body));
-	
-	if ("username" in req.body && "password" in req.body) {
-		database.query("SELECT COUNT(*) FROM users WHERE username = ? AND password = ?", [req.body.username, req.body.password], function (err, result) {
-	    	if (result.length === 1) {
-	    		var resultObject = result[0];
-	    		
-	    		var count = resultObject["COUNT(*)"];
-	    		
-	    		if (count === 1) {
-	    			req.session.authenticated = true;
-					res.status(200);
-					res.end();
-	    		}
-	    		else {
-	    			res.status(401);
-	    			res.end();
-	    		}
-	    	}
-	    	else {
-	    		res.status(401);
-	    		res.end();
-	    	}
-		});
-	}
-	else {
-		res.status(401);
-		res.end();
-	}
 });
 
 var server = http.createServer(app);

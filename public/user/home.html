@@ -1,7 +1,122 @@
 <html>
-<head>
-</head>
-<body>
-	Logged in.
-</body>
+	<head>
+		<meta charset="utf-8">
+	    <meta name="viewport" content="width=device-width">
+	    <meta name="description" content="Penny Football Project">
+	  	<meta name="author" content="Agile Team 2">
+    	<title>Penny Football | Welcome</title>
+		<script src="/jquery.js"></script>
+		<script src="/socket.io.js"></script>
+		<script src="/socket.js"></script>
+		<script src="/reload-client.js"></script>
+		<script>
+			$(document).ready(function() {
+				tableRefresh();
+			});
+			
+			function tableRefresh() {
+				$.ajax({
+					url:'/onlineUsers',
+					type:'GET',
+					success: function(data) {
+						$("#userList").empty();
+						var userList = document.getElementById("userList");
+						for(var i = 0; i < data.onlineUsers.length; i++)
+						{
+							var newListElement = document.createElement("li");
+							var divider = document.createElement("div");
+							var user = document.createTextNode(data.onlineUsers[i]);
+							var inviteButton = document.createElement("input");
+							
+							inviteButton.type = "button";
+							inviteButton.setAttribute("class", "button2");
+							inviteButton.value = "Invite";
+							inviteButton.name = data.onlineUsers[i];
+							inviteButton.setAttribute("onclick", "invitePlayer(this.name)");
+							
+							divider.appendChild(user);
+							divider.appendChild(inviteButton);
+							
+							newListElement.setAttribute("class", "listELement");
+							newListElement.appendChild(divider);
+							
+							userList.appendChild(newListElement);
+						}
+					},
+					error: function(data) {
+						if(data.status === 401) {
+							$('#userList').append("<br><font color='red'>Fetch failed.</font>");
+						}
+					}
+				});
+			}
+			
+			function invitePlayer(clickedName){
+				console.log(clickedName); //?
+			}
+			
+			function logout() {
+				$.ajax({
+					url:'/api/logout',
+					type:'POST',
+					success: function(data) {
+						window.location = "/";
+					},
+					error: function(data) {
+						console.log("Error: Failed to logout.");
+					}
+				});
+			}
+		</script>
+		<style>
+			.button1{
+				height:20px;
+				padding-left: 20px;
+				padding-right:20px;
+			}
+			
+			.button2{
+				float: right;
+				margin: 0;
+				padding: 0;
+			}
+			
+			li {
+				background: #9EF595;
+			}
+			
+			li:nth-child(odd) {
+				background: #87D47F;
+			}
+			
+			.listElement{
+				padding-left: 2px;
+				padding-right: 2px;
+				padding-top: 1px;
+				padding-bottom: 2px;
+			}
+			
+			#userList{
+				width: 35%;
+				padding: 0px;
+				list-style-type: none;
+				background: #9EF595;
+			}
+		</style>
+	</head>
+	<body>
+		<header>
+	      <div>
+	        <div>
+	          <h1>Lobby</h1>
+	          <input type="button" class="button1" value="Logout" onclick="logout()"></input>
+	        </div>
+	      </div>
+	    </header>
+	    
+	    <section>
+			<ul id="userList"></ul>
+	    	<div><input type="submit" class="button1" value="Refresh" onclick="tableRefresh()"></input></div>
+	    </section>
+	</body>
 </html>

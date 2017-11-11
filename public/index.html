@@ -5,27 +5,27 @@
 	    <meta name="description" content="Penny Football Project">
 	  	<meta name="author" content="Agile Team 2">
     	<title>Penny Football | Welcome</title>
-		<script src="jquery.js"></script>
-		<script src="socket.io.js"></script>
-		<script src="socket.js"></script>
-		<script src="reload-client.js"></script>
+		<script src="/jquery.js"></script>
+		<script src="/socket.io.js"></script>
+		<script src="/socket.js"></script>
+		<script src="/reload-client.js"></script>
 		<script>
 			$(document).ready(function() {
 				$('#loginForm').submit(function(e) {
 					e.preventDefault();
 					
-					var username = $('#username').val();
-					var password = $('#password').val();
+					var username = $('#loginUsername').val();
+					var password = $('#loginPassword').val();
 					
 					$.ajax({
-						url:'/login',
+						url:'/api/login',
 						type:'POST',
 						data: {
 							username: username,
 							password: password
 						},
 						success: function() {
-							console.log("Success");
+							console.log("Login success...");
 							window.location = "/user/home.html";
 						},
 						error: function(data) {
@@ -35,13 +35,48 @@
 						}
 					});
 				});
+				
+				$('#registerForm').submit(function(e) {
+					e.preventDefault();
+					
+					var username = $('#registerUsername').val();
+					var password = $('#registerPassword').val();
+					
+					$.ajax({
+						url:'/api/register',
+						type:'POST',
+						data: {
+							username: username,
+							password: password
+						},
+						success: function() {
+							console.log("Register success...");
+							$('#registerForm').append("<br><font color='green'>Register success.</font>");
+						},
+						error: function(data) {
+							if(data.status === 400) {
+								$('#registerForm').append("<br><font color='red'>Invalid username/password.</font>");
+							}
+						}
+					});
+				});
 			});
 		</script>
 		<style>
-			.button_1{
-			  height:20px;
-			  padding-left: 20px;
-			  padding-right:20px;
+			.button1{
+				height:20px;
+				padding-left: 20px;
+				padding-right:20px;
+			}
+			
+			.credentials{
+				float: left;
+			}
+			
+			.credentials section{
+				width: 30%;
+				float: left;
+				padding: 40px;
 			}
 			
 		</style>
@@ -49,21 +84,21 @@
 	<body>
 		<header>
 	      <div>
-	        <div id="branding">
+	        <div>
 	          <h1>Penny Football</h1>
 	        </div>
 	      </div>
 	    </header>
 	    
-	    <section id="credentials">
+	    <section class="credentials">
 	    	
 		    <section id="login">
 		    	<div>
 		    		<h1>Login</h1>
 		    		<form id="loginForm">
-		    			<input id="username" type="text" placeholder="Username"><br>
-		    			<input id="password" type="password" placeholder="Password"><br>
-		    			<input type="submit" class="button_1" value="Login"></button>
+		    			<input id="loginUsername" type="text" placeholder="Username"><br>
+		    			<input id="loginPassword" type="password" placeholder="Password"><br>
+		    			<input type="submit" class="button1" value="Login"></button>
 		    		</form>
 		    	</div>
 		    </section>
@@ -72,9 +107,9 @@
 		    	<div>
 		    		<h1>Register</h1>
 		    		<form id="registerForm">
-		    			<input id="username" type="text" placeholder="Username"><br>
-		    			<input id="password" type="password" placeholder="Password"><br>
-		    			<input type="submit" class"button_1" value="Register"></button>
+		    			<input id="registerUsername" type="text" placeholder="Username"><br>
+		    			<input id="registerPassword" type="password" placeholder="Password"><br>
+		    			<input type="submit" class"button1" value="Register"></button>
 		    		</form>
 		    	</div>
 		    </section>
