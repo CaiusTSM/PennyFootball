@@ -1,4 +1,6 @@
 var Authenticator = function(app, database, validator) {
+	// RPC functions called by client
+	
 	this.login = function(req, res) {
 		console.log("POST " + JSON.stringify(req.body));
 		
@@ -42,6 +44,8 @@ var Authenticator = function(app, database, validator) {
 		}
 	};
 	
+	// Called internally
+	
 	this.authenticated = function(req) {
 		if ("session" in req) {
 			return (req.session.authenticated === true);
@@ -49,6 +53,8 @@ var Authenticator = function(app, database, validator) {
 		
 		return false;
 	};
+	
+	// Setup hooks for the RPC functions
 	
 	app.post("/api/login", this.login);
 	app.post("/api/logout", this.logout);
