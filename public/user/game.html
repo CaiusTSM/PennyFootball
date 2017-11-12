@@ -10,6 +10,7 @@
 		<script src="/socket.js"></script>
 		<script src="/reload-client.js"></script>
 		<script src="/fpsmeter.js"></script>
+		<script src="/planck.js"></script>
 		<script>
 			$(document).ready(function() {
 				var game = new Game();
@@ -36,23 +37,55 @@
 				};
 			}
 			
+			var Ground = function(world, viewWidth, viewHeight) {
+				this.bodyDef = {};
+				
+				this.width = 1;
+				this.height = 1;
+				this.shape = planck.Box(this.width, this.height);
+				
+				this.fixDef = {
+					density: 1.0,
+					friction: 0.5,
+					restitution: 0.2
+				};
+				
+				this.body = world.createBody(this.bodyDef);
+				this.body.setPosition(planck.Vec2(0, 5));
+				
+				this.fixture = this.body.createFixture(this.shape, this.fixDef);
+				
+				this.render = function(ctx, scale) {
+					ctx.fillStyle = "#357654";
+					ctx.fillRect(this.body.getPosition().x * scale, this.body.getPosition().y * scale, this.width * scale, this.height * scale);
+				};
+			};
+			
 			var Game = function() {
 				this.canvas = null;
 				this.ctx = null;
 				
+				this.fitByMax = true;
+				
 				this.viewWidth = 20;
 				this.viewHeight = 20;
 				this.viewMax = this.viewWidth;
+				this.viewMin = this.viewWidth;
 				
 				this.canvasWidth = 0;
 				this.canvasHeight = 0;
 				this.canvasMax = this.canvasWidth;
+				this.canvasMin = this.canvasWidth;
 				
 				this.timer = null;
 				this.timestep = 1.0 / 60.0;
 				this.timePassed = 0;
 				
 				this.fpsmeter = null;
+				
+				this.world = null;
+				this.ground = null;
+				this.boxes = [];
 				
 				this.initialized = false;
 				
@@ -61,26 +94,44 @@
 					this.canvas = document.getElementById("gameCanvas");
 					this.ctx = this.canvas.getContext("2d");
 					
+					this.fitByMax = false;
+					
 					// Setup the virtual view
 					this.viewWidth = 20;
 					this.viewHeight = 20;
 					if (this.viewWidth > this.viewHeight) {
 						this.viewMax = this.viewWidth;
+						this.viewMin = this.viewHeight;
 					}
 					else {
 						this.viewMax = this.viewHeight;
+						this.viewMin = this.viewWidth;
 					}
 					
 					// Setup the real view according to actual canvas size
-					this.canvas.width = this.canvas.parentElement.clientWidth;
-					this.canvas.height = this.canvas.parentElement.clientHeight;
+					if (this.fitByMax === true) {
+						this.canvas.width = this.canvas.parentElement.clientWidth;
+						this.canvas.height = this.canvas.parentElement.clientHeight;
+						this.canvas.style.left = "0px";
+						this.canvas.style.top = "0px";
+					}
+					else {
+						var lesser = this.canvas.parentElement.clientWidth < this.canvas.parentElement.clientHeight ? this.canvas.parentElement.clientWidth : this.canvas.parentElement.clientHeight;
+						this.canvas.width = lesser;
+						this.canvas.height = lesser;
+						this.canvas.style.left = "" + (this.canvas.parentElement.clientWidth / 2 - this.canvas.width / 2) + "px";
+						this.canvas.style.top = "" + (this.canvas.parentElement.clientHeight / 2 - this.canvas.height / 2) + "px";
+					}
+					
 					this.canvasWidth = this.canvas.width;
 					this.canvasHeight = this.canvas.height;
 					if (this.canvasWidth > this.canvasHeight) {
 						this.canvasMax = this.canvasWidth;
+						this.canvasMin = this.canvasHeight;
 					}
 					else {
 						this.canvasMax = this.canvasHeight;
+						this.canvasMin = this.canvasWidth;
 					}
 					
 					this.timer = new Timer();
@@ -88,6 +139,10 @@
 					this.timePassed = 0;
 					
 					this.fpsmeter = new FPSMeter({decimals: 0, graph: true, theme: "dark", left: "30%"});
+					
+					this.world = new planck.World(planck.Vec2(0.0, -10.0), true);
+					this.ground = new Ground(this.world, this.viewWidth, this.viewHeight);
+					this.boxes = [];
 					
 					this.initialized = true;
 				};
@@ -106,15 +161,29 @@
 					this.fpsmeter.tickStart();
 					
 					// Set the real view according to actual canvas size (in loop since the player can resize the window)
-					this.canvas.width = this.canvas.parentElement.clientWidth;
-					this.canvas.height = this.canvas.parentElement.clientHeight;
+					if (this.fitByMax === true) {
+						this.canvas.width = this.canvas.parentElement.clientWidth;
+						this.canvas.height = this.canvas.parentElement.clientHeight;
+						this.canvas.style.left = "0px";
+						this.canvas.style.top = "0px";
+					}
+					else {
+						var lesser = this.canvas.parentElement.clientWidth < this.canvas.parentElement.clientHeight ? this.canvas.parentElement.clientWidth : this.canvas.parentElement.clientHeight;
+						this.canvas.width = lesser;
+						this.canvas.height = lesser;
+						this.canvas.style.left = "" + (this.canvas.parentElement.clientWidth / 2 - this.canvas.width / 2) + "px";
+						this.canvas.style.top = "" + (this.canvas.parentElement.clientHeight / 2 - this.canvas.height / 2) + "px";
+					}
+					
 					this.canvasWidth = this.canvas.width;
 					this.canvasHeight = this.canvas.height;
 					if (this.canvasWidth > this.canvasHeight) {
 						this.canvasMax = this.canvasWidth;
+						this.canvasMin = this.canvasHeight;
 					}
 					else {
 						this.canvasMax = this.canvasHeight;
+						this.canvasMin = this.canvasWidth;
 					}
 					
 					// Compute time passed, restart timer, add to time passed (capped to max 1 second)
@@ -129,7 +198,8 @@
 					}
 					
 					// render at non-fixed timestep (as fast as this loop runs)
-					this.render(dt);
+					// scale by min (creates black bars at sides like when putting a square video on a tv screen)
+					this.render(dt, this.canvasMin / this.viewMin);
 					
 					this.fpsmeter.tick();
 					
@@ -143,8 +213,8 @@
 				};
 				
 				// Game rendering (drawing) goes here
-				this.render = function(dt) {
-					
+				this.render = function(dt, scale) {
+					this.ground.render(this.ctx, scale);
 				};
 			};
 		</script>
@@ -223,6 +293,8 @@
 			}
 			
 			#gameCanvas {
+				position: relative;
+				
 				margin: 0;
 				padding: 0;
 				
