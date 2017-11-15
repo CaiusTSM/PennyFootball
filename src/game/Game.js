@@ -92,7 +92,7 @@ var Game = function() {
 			// Web browser function used for 60fps stuff like animations and games (relativly new)
 			//requestAnimationFrame(this.loop);
 			//setInterval(this.loop, 2);
-			setInterval(this.loop, 1);
+			setTimeout(this.loop, 0);
 		}
 		else {
 			console.log("Error: Started game without initialization.");
@@ -127,7 +127,7 @@ var Game = function() {
 			process.send(this.createPacket());
 		}
 		
-		//setImmediate(this.loop);
+		setTimeout(this.loop, 0);
 	}.bind(this);
 	// This bind thing is so "this" still points to the right thing when using requestAnimationFrame or setInterval
 	

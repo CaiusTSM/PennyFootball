@@ -4,6 +4,7 @@ var Database = function(host, user, pass) {
 	this.queryInsertNewUser = "INSERT INTO users (username, password, wins, losses) VALUES (?, ?, 0, 0)";
 	this.queryMatchingUsersCount = "SELECT COUNT(*) FROM users WHERE username = ? AND password = ?";
 	this.queryUsernameExists = "SELECT COUNT(*) FROM users WHERE username = ?";
+	this.queryInsertGame = "INSERT INTO ongoing_games (username1, username2, uuid) VALUES (?, ?, ?)";
 	
 	this.database = mysql.createConnection({
 		host: host,
@@ -31,6 +32,7 @@ var Database = function(host, user, pass) {
 		});
 	};
 	
+	// 0 is false (failure), 1 is true (success)
 	this.insertUser = function(username, password, callback) {
 		this.database.query(this.queryInsertNewUser, [username, password], function(err, result) {
 			if (err) {
@@ -42,7 +44,7 @@ var Database = function(host, user, pass) {
 		});
 	};
 	
-	//0 returns false (User DNE), 1 return true, 2 returns error
+	// 0 returns false (User DNE), 1 return true, 2 returns error
 	this.userExists = function(username, password, callback) {
 		this.database.query(this.queryMatchingUsersCount, [username, password], function(err, result) {
 	    	if (err) {
@@ -65,7 +67,7 @@ var Database = function(host, user, pass) {
 		});
 	};
 	
-	//0 returns false (username not taken), 1 returns true, 2 returns error
+	// 0 returns false (username not taken), 1 returns true, 2 returns error
 	this.usernameTaken = function(username, callback) {
 		this.database.query(this.queryUsernameExists, [username], function(err, result) {
 			if (err) {
@@ -84,6 +86,18 @@ var Database = function(host, user, pass) {
 			}
 			else {
 				callback(2);
+			}
+		});
+	};
+	
+	// 0 is false (failure), 1 is true (success)
+	this.insertGame = function(username1, username2, gameId, callback) {
+		this.database.query(this.queryInsertGame, [username1, username2, gameId], function(err, result) {
+			if (err) {
+				callback(0);
+			}
+			else {
+				callback(1);
 			}
 		});
 	};

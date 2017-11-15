@@ -1,5 +1,4 @@
 var GameRoom = require("./GameRoom.js");
-var uuid = require("uuid/v4");
 
 var GameServer = function(io) {
 	this.io = io;
@@ -16,8 +15,10 @@ var GameServer = function(io) {
 						var room = this.rooms[i];
 						if (room.uuid === uuid) {
 							console.log("Player joined #[" + room.uuid + "]...");
-							room.onConnect(socket);
-							socket.emit("joined");
+							var connected = room.onConnect(socket);
+							if (connected === true) {
+								socket.emit("joined");
+							}
 							break;
 						}
 					}
@@ -37,14 +38,24 @@ var GameServer = function(io) {
 		}.bind(this));
 	}.bind(this));
 	
-	this.createGameRoom = function() {
-		// TODO change this, this is for testingto have an ID I can guess
-		var room = new GameRoom(this.io, "1");
+	this.createGameRoom = function(id) {
+		var room = new GameRoom(this.io, id);
 		this.rooms.push(room);
 		room.startGame();
+		
+		return id;
 	};
 	
-	this.createGameRoom();
+	this.deleteGameRoom = function(id) {
+		for (var i = 0; i < this.rooms.length; ++i) {
+			var room = this.rooms[i];
+			
+			if (room.uuid === id) {
+				room.endGame();
+				this.rooms.splice(i, 1);
+			}
+		}
+	};
 };
 
 module.exports = GameServer;

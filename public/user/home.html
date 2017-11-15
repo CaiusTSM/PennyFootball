@@ -11,16 +11,37 @@
 		<script src="/reload-client.js"></script>
 		<script>
 			$(document).ready(function() {
-				tableRefresh();
+				ping();
+				usersRefresh();
+				invitesRefresh();
+				var pingInterval = setInterval(ping, 1000 * 3);
+				var usersRefreshInterval = setInterval(usersRefresh, 1000 * 3);
+				var invitesRefreshInterval = setInterval(invitesRefresh, 1000 * 3);
 			});
 			
-			function tableRefresh() {
+			function ping() {
 				$.ajax({
-					url:'/onlineUsers',
+					url:'/api/lobby/ping',
+					type:'POST',
+					success: function() {
+					},
+					error: function(data) {
+						if(data.status === 401) {
+							$('#userList').append("<br><font color='red'>Failed to ping server.</font>");
+						}
+					}
+				});
+			}
+			
+			function usersRefresh() {
+				$.ajax({
+					url:'/api/lobby/online',
 					type:'GET',
 					success: function(data) {
 						$("#userList").empty();
+						
 						var userList = document.getElementById("userList");
+						
 						for(var i = 0; i < data.onlineUsers.length; i++)
 						{
 							var newListElement = document.createElement("li");
@@ -32,7 +53,7 @@
 							inviteButton.setAttribute("class", "button2");
 							inviteButton.value = "Invite";
 							inviteButton.name = data.onlineUsers[i];
-							inviteButton.setAttribute("onclick", "invitePlayer(this.name)");
+							inviteButton.setAttribute("onclick", "invitePlayer('" + data.onlineUsers[i] + "')");
 							
 							divider.appendChild(user);
 							divider.appendChild(inviteButton);
@@ -44,15 +65,103 @@
 						}
 					},
 					error: function(data) {
-						if(data.status === 401) {
-							$('#userList').append("<br><font color='red'>Fetch failed.</font>");
-						}
+						$('#userList').append("<br><font color='red'>Fetch failed.</font>");
 					}
 				});
 			}
 			
-			function invitePlayer(clickedName){
-				console.log(clickedName); //?
+			function invitePlayer(username) {
+				$.ajax({
+					url:'/api/lobby/invite',
+					type:'POST',
+					data: {
+						username: username
+					},
+					success: function() {
+					},
+					error: function(data) {
+						$('#userList').append("<br><font color='red'>Failed to invite player.</font>");
+					}
+				});
+			}
+			
+			function invitesRefresh() {
+				$.ajax({
+					url:'/api/lobby/invites',
+					type:'GET',
+					success: function(data) {
+						$("#inviteList").empty();
+						
+						var inviteList = document.getElementById("inviteList");
+						
+						for(var i = 0; i < data.invites.length; i++)
+						{
+							var invite = data.invites[i];
+							
+							var newListElement = document.createElement("li");
+							var divider = document.createElement("div");
+							var inviteElement = document.createTextNode(invite);
+							var acceptButton = document.createElement("input");
+							var declineButton = document.createElement("input");
+							
+							acceptButton.type = "button";
+							acceptButton.setAttribute("class", "button2");
+							acceptButton.value = "Accept";
+							acceptButton.name = invite;
+							acceptButton.setAttribute("onclick", "acceptInvite('" + invite + "')");
+							
+							declineButton.type = "button";
+							declineButton.setAttribute("class", "button2");
+							declineButton.value = "Decline";
+							declineButton.name = invite;
+							declineButton.setAttribute("onclick", "declineInvite('" + invite + "')");
+							
+							divider.appendChild(inviteElement);
+							divider.appendChild(acceptButton);
+							divider.appendChild(declineButton);
+							
+							newListElement.setAttribute("class", "listELement");
+							newListElement.appendChild(divider);
+							
+							inviteList.appendChild(newListElement);
+						}
+					},
+					error: function(data) {
+						$('#inviteList').append("<br><font color='red'>Fetch failed.</font>");
+					}
+				});
+			}
+			
+			function acceptInvite(username) {
+				$.ajax({
+					url:'/api/lobby/accept',
+					type:'POST',
+					data: {
+						username: username
+					},
+					success: function(data) {
+						console.log(data);
+					},
+					error: function(data) {
+						$('#inviteList').append("<br><font color='red'>Failed to accept invite.</font>");
+					}
+				});
+			}
+			
+			function declineInvite(username) {
+				$.ajax({
+					url:'/api/lobby/decline',
+					type:'POST',
+					data: {
+						username: username
+					},
+					success: function() {
+						invitesRefresh();
+					},
+					error: function(data) {
+						$('#inviteList').append("<br><font color='red'>Failed to decline invite.</font>");
+					}
+				});
 			}
 			
 			function logout() {
@@ -69,13 +178,13 @@
 			}
 		</script>
 		<style>
-			.button1{
+			.button1 {
 				height:20px;
 				padding-left: 20px;
 				padding-right:20px;
 			}
 			
-			.button2{
+			.button2 {
 				float: right;
 				margin: 0;
 				padding: 0;
@@ -89,11 +198,18 @@
 				background: #87D47F;
 			}
 			
-			.listElement{
+			.listElement {
 				padding: 1px 2px 2px 2px;
 			}
 			
-			#userList{
+			#userList {
+				width: 35%;
+				padding: 0px;
+				list-style-type: none;
+				background: #9EF595;
+			}
+			
+			#inviteList {
 				width: 35%;
 				padding: 0px;
 				list-style-type: none;
@@ -114,6 +230,10 @@
 	    <section>
 			<ul id="userList"></ul>
 	    	<div><input type="submit" class="button1" value="Refresh" onclick="tableRefresh()"></input></div>
+	    </section>
+	    <section>
+			<ul id="inviteList"></ul>
+	    	<div><input type="submit" class="button1" value="Refresh" onclick="invitesRefresh()"></input></div>
 	    </section>
 	</body>
 </html>

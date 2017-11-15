@@ -6,10 +6,11 @@ var bodyParser = require('body-parser');
 var sessions = require("client-sessions");
 var mysql = require('mysql');
 
-var Database = require('./src/database.js');
+var Database = require('./src/Database.js');
 var Validator = require('./src/validator.js');
 var Registrar = require('./src/registrar.js');
 var Authenticator = require('./src/authenticator.js');
+var Lobby = require('./src/Lobby.js');
 var GameServer = require('./src/game/GameServer.js');
 
 var app = express();
@@ -49,36 +50,12 @@ var publicDir = __dirname + "/public/";
 
 var changed = [];
 
-var onlineUsers = ["lucas", "sean", "rh3894h_bob"];
-
-app.get("/onlineUsers", function(req, res) {
-	console.log("Getting user list");
-	res.send({onlineUsers: onlineUsers});
-	res.end();
-});
-
-app.get("/user/*", function(req, res) {
-	console.log("GET " + req.url);
-	if (auth.authenticated(req)) {
-		res.status(200);
-		res.sendFile(publicDir + req.url);
-	}
-	else {
-		res.status(401);
-		res.send("Access Denied.");
-	}
-});
-
-app.get("/*", function(req, res) {
-	console.log("GET " + req.url);
-	res.sendFile(publicDir + req.url);
-});
-
 var server = http.createServer(app);
 
 var io = socketio(server);
 
 var gameServer = new GameServer(io);
+var lobby = new Lobby(app, database, validator, gameServer);
 
 io.on('connection', function(socket) {
 	console.log(socket.handshake.address + " connected.");
@@ -122,6 +99,23 @@ var reloadClientsTimer = setInterval(function() {
 watch(publicDir, { recursive: true }, function(evt, name) {
 	var sp = name.split("\\").join("/").split("/");
 	changed.push(sp[sp.length - 1]);
+});
+
+app.get("/user/*", function(req, res) {
+	console.log("GET " + req.url);
+	if (auth.authenticated(req)) {
+		res.status(200);
+		res.sendFile(publicDir + req.url);
+	}
+	else {
+		res.status(401);
+		res.send("Access Denied.");
+	}
+});
+
+app.get("/*", function(req, res) {
+	console.log("GET " + req.url);
+	res.sendFile(publicDir + req.url);
 });
 
 server.listen(PORT, IP, function() {
