@@ -86,7 +86,7 @@ var Database = function(host, user, pass) {
 				callback(2);
 			}
 		});
-	}
+	};
 };
 
 module.exports = Database;

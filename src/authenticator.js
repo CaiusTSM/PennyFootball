@@ -16,6 +16,7 @@ var Authenticator = function(app, database, validator) {
 					}
 					else if (exists === 1) {
 						req.session.authenticated = true;
+						req.session.username = username;
 						res.status(200);
 						res.end();
 					}
@@ -47,6 +48,14 @@ var Authenticator = function(app, database, validator) {
 			res.end();
 		}
 	};
+	
+	this.getUsername = function(req, res) {
+		if ("session" in req) {
+			if(req.session.authenticated === true) {
+				return(req.session.username);
+			}
+		}
+	}
 	
 	// Called internally
 	

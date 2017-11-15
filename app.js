@@ -10,6 +10,7 @@ var Database = require('./src/database.js');
 var Validator = require('./src/validator.js');
 var Registrar = require('./src/registrar.js');
 var Authenticator = require('./src/authenticator.js');
+var GameServer = require('./src/game/GameServer.js');
 
 var app = express();
 
@@ -51,12 +52,13 @@ var changed = [];
 var onlineUsers = ["lucas", "sean", "rh3894h_bob"];
 
 app.get("/onlineUsers", function(req, res) {
-	console.log("Getting user table");
+	console.log("Getting user list");
 	res.send({onlineUsers: onlineUsers});
 	res.end();
 });
 
 app.get("/user/*", function(req, res) {
+	console.log("GET " + req.url);
 	if (auth.authenticated(req)) {
 		res.status(200);
 		res.sendFile(publicDir + req.url);
@@ -75,6 +77,8 @@ app.get("/*", function(req, res) {
 var server = http.createServer(app);
 
 var io = socketio(server);
+
+var gameServer = new GameServer(io);
 
 io.on('connection', function(socket) {
 	console.log(socket.handshake.address + " connected.");
