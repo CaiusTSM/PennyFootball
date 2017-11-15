@@ -39,9 +39,12 @@ var GameServer = function(io) {
 	}.bind(this));
 	
 	this.createGameRoom = function(id) {
+		console.log("Created game room: " + id);
 		var room = new GameRoom(this.io, id);
 		this.rooms.push(room);
 		room.startGame();
+		
+		setTimeout(room.onTimeout, 1000 * 60 * 1);
 		
 		return id;
 	};

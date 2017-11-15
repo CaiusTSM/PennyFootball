@@ -205,7 +205,7 @@ var Lobby = function(app, database, validator, gameServer) {
 						res.send({ gameId: id });
 						res.end();
 					}
-				});
+				}.bind(this));
 			}
 			else {
 				res.status(400);

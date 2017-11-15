@@ -20,16 +20,6 @@ var GameRoom = function(io, uuid) {
 	this.clients = [];
 	
 	this.onConnect = function(socket) {
-		// If it takes more than a minute for a user to connect then destroy the game room
-		var time = new Date().getTime();
-		
-		var timeout = 1000 * 60 * 1;
-		
-		if (this.running === true && time - this.creationTime > timeout) {
-			this.endGame();
-			return false;
-		}
-		
 		this.clients.push(new GameClient(this.game, this.uuid, socket));
 		
 		return true;
@@ -62,7 +52,15 @@ var GameRoom = function(io, uuid) {
 		for (var i = 0; i < this.clients.length; ++i) {
 			this.clients.terminate();
 		}
+		
+		console.log("Game room closed: " + this.uuid);
 	};
+	
+	this.onTimeout = function() {
+		if (this.clients.length === 0) {
+			this.endGame();
+		}
+	}.bind(this);
 	
 	this.gameProc.on('message', function(msg) {
 		this.io.to(this.uuid).emit("state", msg);
