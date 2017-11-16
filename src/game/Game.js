@@ -3,6 +3,8 @@ var uuid = require("uuid/v4");
 var time = require("./time.js");
 var planck = require("./planck.js");
 
+// Here there would be like Coin object and stuff and Game would have a list of them
+// Also a Wall object for the bounds of the game's arena.
 
 // Game object for physics demo
 var Ground = function(world) {
@@ -89,10 +91,9 @@ var Game = function() {
 	this.start = function() {
 		if (this.initialized === true) {
 			this.timer.start();
-			// Web browser function used for 60fps stuff like animations and games (relativly new)
 			//requestAnimationFrame(this.loop);
 			//setInterval(this.loop, 2);
-			setTimeout(this.loop, 0);
+			setTimeout(this.loop, 1);
 		}
 		else {
 			console.log("Error: Started game without initialization.");
@@ -127,7 +128,7 @@ var Game = function() {
 			process.send(this.createPacket());
 		}
 		
-		setTimeout(this.loop, 0);
+		setTimeout(this.loop, 1);
 	}.bind(this);
 	// This bind thing is so "this" still points to the right thing when using requestAnimationFrame or setInterval
 	
