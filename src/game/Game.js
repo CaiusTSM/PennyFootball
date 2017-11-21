@@ -140,44 +140,7 @@ var Game = function() {
 			}
 		}
 		*/
-		this.walls = [];
-		
-		// Top left
-		this.walls.push(new Wall(this.world, planck.Vec2(0.5, 7.5 / 2.0), 1.0, 7.5));
-		
-		// Bottom left
-		this.walls.push(new Wall(this.world, planck.Vec2(0.5, 7.5 / 2.0 + 7.5 + 5.0), 1.0, 7.5));
-		
-		// Top right
-		this.walls.push(new Wall(this.world, planck.Vec2(39.5, 7.5 / 2.0), 1.0, 7.5));
-		
-		// Bottom right
-		this.walls.push(new Wall(this.world, planck.Vec2(39.5, 7.5 / 2.0 + 7.5 + 5.0), 1.0, 7.5));
-		
-		// Top
-		this.walls.push(new Wall(this.world, planck.Vec2(20.0, 0.5), 40.0, 1.0));
-		
-		// Bottom
-		this.walls.push(new Wall(this.world, planck.Vec2(20.0, 19.5), 40.0, 1.0));
-		
-		this.coins = [];
-		
-		// The soccer ball
-		this.coins.push(new Coin(this.world, 0.5, 3.0, planck.Vec2(19.5, 9.0)));
-		
-		// Team 1
-		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(15.0, 5.0)));
-		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(15.0, 9.0)));
-		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(15.0, 13.0)));
-		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(17.0, 7.0)));
-		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(17.0, 11.0)));
-		
-		// Team 2
-		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(24.0, 5.0)));
-		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(24.0, 9.0)));
-		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(24.0, 13.0)));
-		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(22.0, 7.0)));
-		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(22.0, 11.0)));
+		this.setup();
 		
 		this.initialized = true;
 	};
@@ -250,6 +213,65 @@ var Game = function() {
 		this.inputQueue = [];
 		
 		this.world.step(this.timestep);
+	};
+	
+	this.setup = function() {
+		this.walls = [];
+		
+		// Left backplate
+		this.walls.push(new Wall(this.world, planck.Vec2(-0.4, 7.5 / 2.0 + 5.0 + 2.5 / 2.0), 1.0, 5.0));
+		
+		// Right backplate
+		this.walls.push(new Wall(this.world, planck.Vec2(40.4, 7.5 / 2.0 + 5.0 + 2.5 / 2.0), 1.0, 5.0));
+		
+		// Top left
+		this.walls.push(new Wall(this.world, planck.Vec2(0.5, 7.5 / 2.0), 1.0, 7.5));
+		
+		// Bottom left
+		this.walls.push(new Wall(this.world, planck.Vec2(0.5, 7.5 / 2.0 + 7.5 + 5.0), 1.0, 7.5));
+		
+		// Top right
+		this.walls.push(new Wall(this.world, planck.Vec2(39.5, 7.5 / 2.0), 1.0, 7.5));
+		
+		// Bottom right
+		this.walls.push(new Wall(this.world, planck.Vec2(39.5, 7.5 / 2.0 + 7.5 + 5.0), 1.0, 7.5));
+		
+		// Top
+		this.walls.push(new Wall(this.world, planck.Vec2(20.0, 0.5), 40.0, 1.0));
+		
+		// Bottom
+		this.walls.push(new Wall(this.world, planck.Vec2(20.0, 19.5), 40.0, 1.0));
+		
+		// Top pillar
+		this.walls.push(new Wall(this.world, planck.Vec2(20.0, 2.5), 1.0, 5.0));
+		
+		// Bottom pillar
+		this.walls.push(new Wall(this.world, planck.Vec2(20.0, 17.5), 1.0, 5.0));
+		
+		this.coins = [];
+		
+		// The soccer ball
+		this.coins.push(new Coin(this.world, 0.5, 3.0, planck.Vec2(20.0, 9.0)));
+		
+		// Team 1
+		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(15.0, 5.0)));
+		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(15.0, 9.0)));
+		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(15.0, 13.0)));
+		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(17.0, 7.0)));
+		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(17.0, 11.0)));
+		
+		// Goal keeper 1
+		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(2.0, 7.5 / 2.0 + 5.0 + 2.5 / 2.0)));
+		
+		// Team 2
+		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(25.0, 5.0)));
+		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(25.0, 9.0)));
+		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(25.0, 13.0)));
+		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(23.0, 7.0)));
+		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(23.0, 11.0)));
+		
+		// Goal keeper 2
+		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(38.0, 7.5 / 2.0 + 5.0 + 2.5 / 2.0)));
 	};
 	
 	this.pushInput = function(input) {
