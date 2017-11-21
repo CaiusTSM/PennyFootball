@@ -74,7 +74,13 @@
 					data: {
 						username: username
 					},
-					success: function() {
+					success: function(data) {
+						if ("gameId" in data) {
+							window.location.href = "/user/game.html?gameid=" + data.gameId;
+						}
+						else {
+							$('#inviteList').append("<br><font color='red'>Failed to invite player (invalid response from server).</font>");
+						}
 					},
 					error: function(data) {
 						$('#userList').append("<br><font color='red'>Failed to invite player.</font>");
@@ -137,7 +143,12 @@
 						username: username
 					},
 					success: function(data) {
-						console.log(data);
+						if ("gameId" in data) {
+							window.location.href = "/user/game.html?gameid=" + data.gameId;
+						}
+						else {
+							$('#inviteList').append("<br><font color='red'>Failed to accept invite (invalid response from server).</font>");
+						}
 					},
 					error: function(data) {
 						$('#inviteList').append("<br><font color='red'>Failed to accept invite.</font>");

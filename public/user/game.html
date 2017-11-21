@@ -8,7 +8,6 @@
 		<script src="/jquery.js"></script>
 		<script src="/socket.io.js"></script>
 		<script src="/socket.js"></script>
-		<script src="/reload-client.js"></script>
 		<script src="/fpsmeter.js"></script>
 		<script src="/seedrandom.js"></script>
 		<script src="/planck.js"></script>
@@ -24,7 +23,32 @@
 				var camera = new Camera(canvas, false);
 				
 				var client = new GameClient(socket, camera, ctx);
-				client.join("1");
+				
+				canvas.addEventListener("mousemove", function(e) {
+					var mouseX = e.clientX;
+					var mouseY = e.clientY;
+					
+					client.onMouseMove(mouseX, mouseY);
+				});
+				
+				canvas.addEventListener("mousedown", function(e) {
+					var mouseX = e.clientX;
+					var mouseY = e.clientY;
+					
+					client.onMouseDown(mouseX, mouseY);
+				});
+				
+				canvas.addEventListener("mouseup", function(e) {
+					var mouseX = e.clientX;
+					var mouseY = e.clientY;
+					
+					client.onMouseUp(mouseX, mouseY);
+				});
+				
+				var query = window.location.search.substring(1);
+				var gameId = query.split("=")[1];
+				
+				client.join(gameId);
 			});
 		</script>
 		<style>

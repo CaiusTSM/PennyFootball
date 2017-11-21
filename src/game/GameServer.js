@@ -38,9 +38,9 @@ var GameServer = function(io) {
 		}.bind(this));
 	}.bind(this));
 	
-	this.createGameRoom = function(id) {
+	this.createGameRoom = function(id, username1, username2) {
 		console.log("Created game room: " + id);
-		var room = new GameRoom(this.io, id);
+		var room = new GameRoom(this.io, id, username1, username2);
 		this.rooms.push(room);
 		room.startGame();
 		

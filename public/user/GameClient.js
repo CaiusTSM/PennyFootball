@@ -40,6 +40,19 @@ var GameClient = function(socket, camera, ctx) {
 	this.timePassed = 0.0;
 	this.timer = new Timer();
 	
+	this.scale = 1.0;
+	
+	this.mouseX = 0.0;
+	this.mouseY = 0.0;
+	this.mouseWasDown = false;
+	this.mouseDown = false;
+	
+	this.makingMove = false;
+	this.moveStartX = 0.0;
+	this.moveStartY = 0.0;
+	this.moveEndX = 0.0;
+	this.moveEndY = 0.0;
+	
 	this.onJoin = function() {
 		console.log("Joined");
 		this.inRoom = true;
@@ -48,15 +61,9 @@ var GameClient = function(socket, camera, ctx) {
 	}.bind(this);
 	
 	this.onState = function(data) {
-		if (this.stateBuffer.length < 10) {
+		if (this.stateBuffer.length < 100) {
 			this.stateBuffer.splice(0, 0, data);
 		}
-		else {
-			this.socket.disconnect();
-			
-			this.stateBuffer = [];
-		}
-		console.log(this.stateBuffer.length);
 	}.bind(this);
 	
 	this.join = function(gameId) {
@@ -78,7 +85,11 @@ var GameClient = function(socket, camera, ctx) {
 			var currentState = this.stateBuffer[this.stateBuffer.length - 1];
 			
 			var timeBetweenStates = Math.abs(targetState.time - currentState.time) * this.timestep;
-			if (this.stateBuffer.length > 5) {
+			
+			if (this.stateBuffer.length > 10) {
+				timeBetweenStates = Math.abs(targetState.time - currentState.time) * this.timestep * 0.05;
+			}
+			else if (this.stateBuffer.length > 5) {
 				timeBetweenStates = Math.abs(targetState.time - currentState.time) * this.timestep * 0.5;
 			}
 			
@@ -101,11 +112,13 @@ var GameClient = function(socket, camera, ctx) {
 			
 		// render at non-fixed timestep (as fast as this loop runs)
 		if (this.camera.fitByMax === true) {
-			this.render(this.ctx, this.camera.max / this.camera.viewMax);
+			this.scale = this.camera.max / this.camera.viewMax;
 		}
 		else {
-			this.render(this.ctx, this.camera.min / this.camera.viewMin);
+			this.scale = this.camera.min / this.camera.viewMin;
 		}
+		
+		this.render(this.ctx, this.scale);
 		
 		requestAnimationFrame(this.loop);
 	}.bind(this);
@@ -149,7 +162,55 @@ var GameClient = function(socket, camera, ctx) {
 				ctx.restore();
 			}
 		}
+		
+		if (this.mouseDown === true && this.makingMove === true) {
+			ctx.fillStyle = "#aaaaaa";
+			
+			ctx.beginPath();
+			ctx.moveTo(this.moveStartX, this.moveStartY);
+			ctx.lineTo(this.moveEndX, this.moveEndX);
+			ctx.stroke();
+		}
 	};
+	
+	this.makeMove = function() {
+		
+	};
+	
+	this.onMouseMove = function(mouseX, mouseY) {
+		this.mouseX = mouseX;
+		this.mouseY = mouseY;
+	}.bind(this);
+	
+	this.onMouseDown = function(mouseX, mouseY) {
+		this.mouseX = mouseX;
+		this.mouseY = mouseY;
+		
+		this.mouseWasDown = this.mouseDown;
+		this.mouseDown = true;
+		
+		if (this.mouseDown === true && this.mouseWasDown === false) {
+			this.makingMove = true;
+			this.moveStartX = this.mouseX;
+			this.moveStartY = this.mouseY;
+		}
+	}.bind(this);
+	
+	this.onMouseUp = function(mouseX, mouseY) {
+		this.mouseX = mouseX;
+		this.mouseY = mouseY;
+		
+		this.mouseWasDown = this.mouseDown;
+		this.mouseDown = false;
+		
+		if (this.mouseDown === false && this.mouseDown === true) {
+			this.makingMove = false;
+			this.moveEndX = this.mouseX;
+			this.moveEndY = this.mouseY;
+			
+			this.makeMove();
+		}
+	}.bind(this);
 	
 	this.socket.on("state", this.onState);
 	this.socket.on("joined", this.onJoin);

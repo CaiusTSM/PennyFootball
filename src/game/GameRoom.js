@@ -5,9 +5,12 @@ var GameClient = require("./GameClient.js");
 
 var gameProcFile = __dirname + "/game_proc.js";
 
-var GameRoom = function(io, uuid) {
+var GameRoom = function(io, uuid, username1, username2) {
 	this.io = io;
 	this.uuid = uuid;
+	
+	this.username1 = username1;
+	this.username2 = username2;
 	
 	this.creationTime = new Date().getTime();
 	
@@ -19,24 +22,8 @@ var GameRoom = function(io, uuid) {
 	
 	this.clients = [];
 	
-	this.onConnect = function(socket) {
-		this.clients.push(new GameClient(this.game, this.uuid, socket));
-		
-		return true;
-	};
-	
-	this.onDisconnect = function(socket) {
-		for (var i = 0; i < this.clients.length; ++i) {
-			var client = this.clients[i];
-			if (client.socket.id === socket.id) {
-				client.disconnect();
-				this.clients.splice(i, 1);
-				return true;
-			}
-		}
-		
-		return false;
-	};
+	this.turn = true;
+	this.winner = 0;
 	
 	this.startGame = function() {
 		this.gameProc.send("start");
@@ -50,11 +37,58 @@ var GameRoom = function(io, uuid) {
 		}
 		
 		for (var i = 0; i < this.clients.length; ++i) {
-			this.clients.terminate();
+			this.clients[i].terminate();
 		}
 		
 		console.log("Game room closed: " + this.uuid);
 	};
+	
+	this.onConnect = function(socket) {
+		if (this.clients.length < 2) {
+			if (this.clients.length === 0) {
+				this.clients.push(new GameClient(this.game, this.uuid, socket, this.username1));
+			}
+			else {
+				if (this.clients[0].username === this.username1) {
+					this.clients.push(new GameClient(this.game, this.uuid, socket, this.username2));
+				}
+				else {
+					this.clients.push(new GameClient(this.game, this.uuid, socket, this.username1));
+				}
+			}
+		}
+		
+		return true;
+	}.bind(this);
+	
+	this.onDisconnect = function(socket) {
+		for (var i = 0; i < this.clients.length; ++i) {
+			var client = this.clients[i];
+			if (client.socket.id === socket.id) {
+				client.disconnect();
+				
+				if (this.winner === 0) {
+					if (i === 0) {
+						this.winner = 2;
+					}
+					else if (i === 1) {
+						this.winner = 1;
+					}
+					
+					//this.endGame();
+				}
+				
+				this.clients.splice(i, 1);
+				return true;
+			}
+		}
+		
+		return false;
+	}.bind(this);
+	
+	this.onMove = function(data) {
+		
+	}.bind(this);
 	
 	this.onTimeout = function() {
 		if (this.clients.length === 0) {
@@ -63,7 +97,9 @@ var GameRoom = function(io, uuid) {
 	}.bind(this);
 	
 	this.gameProc.on('message', function(msg) {
-		this.io.to(this.uuid).emit("state", msg);
+		for (var i = 0; i < this.clients.length; ++i) {
+			this.clients[i].socket.emit("state", msg);
+		}
 	}.bind(this));
 };
 

@@ -8,7 +8,7 @@ var Lobby = function(app, database, validator, gameServer) {
 	// Each user in list can expire over time and be removed by checkForDeadUsers
 	this.onlineUsers = [];
 	
-	// List of invites { username1: username, username2: username, time: new Date().getTime() }
+	// List of invites { username1: username, username2: username, gameId: uuid, time: new Date().getTime() }
 	// username1 is the one that sent the invite
 	// Each invite can expire over time
 	this.invites = [];
@@ -55,7 +55,7 @@ var Lobby = function(app, database, validator, gameServer) {
 		return false;
 	}.bind(this);
 	
-	this.addInvite = function(username1, username2) {
+	this.addInvite = function(username1, username2, gameId) {
 		var foundInvite = false;
 		
 		for (var i = 0; i < this.invites.length; ++i) {
@@ -69,8 +69,20 @@ var Lobby = function(app, database, validator, gameServer) {
 		}
 		
 		if (foundInvite === false) {
-			this.invites.push({ username1: username1, username2: username2, time: new Date().getTime() });
+			var newInvite = { username1: username1, username2: username2, gameId: gameId, time: new Date().getTime() };
+			
+			this.invites.push(newInvite);
 		}
+	}.bind(this);
+	
+	this.getInviteByNames = function(username1, username2) {
+		for (var i = 0; i < this.invites.length; ++i) {
+			if (this.invites[i].username1 === username1 && this.invites[i].username2 === username2) {
+				return this.invites[i];
+			}
+		}
+		
+		return null;
 	}.bind(this);
 	
 	this.removeDeadInvites = function() {
@@ -138,15 +150,27 @@ var Lobby = function(app, database, validator, gameServer) {
 	
 	this.onInvite = function(req, res) {
 		if (req.session.authenticated === true) {
+			var username1 = req.session.username;
+			
 			if ("username" in req.body) {
 				var username2 = req.body.username;
 				
-				this.addInvite(req.session.username, username2);
+				var id = uuid();
 				
-				console.log(JSON.stringify(this.invites));
+				this.addInvite(req.session.username, username2, id);
 				
-				res.status(200);
-				res.end();
+				this.database.insertGame(username1, username2, id, function(inserted) {
+					if (inserted === 0) {
+						res.status(400);
+						res.end();
+					}
+					else if (inserted === 1) {
+						this.gameServer.createGameRoom(id, username1, username2);
+						
+						res.status(200);
+						res.send({ gameId: id });
+					}
+				}.bind(this));
 			}
 			else {
 				res.status(400);
@@ -191,21 +215,16 @@ var Lobby = function(app, database, validator, gameServer) {
 			if ("username" in req.body) {
 				var username1 = req.body.username;
 				
-				// UUID = unqiue universal identifier (aka long random string)
-				var id = uuid();
+				var invite = this.getInviteByNames(username1, username2);
 				
-				this.database.insertGame(username1, username2, id, function(inserted) {
-					if (inserted === 0) {
-						res.status(400);
-						res.end();
-					}
-					else if (inserted === 1) {
-						this.gameServer.createGameRoom(id);
-						
-						res.send({ gameId: id });
-						res.end();
-					}
-				}.bind(this));
+				if (invite !== null) {
+					res.send({ gameId: invite.gameId });
+					res.end();
+				}
+				else {
+					res.status(400);
+					res.end();
+				}
 			}
 			else {
 				res.status(400);
