@@ -25,22 +25,22 @@
 				var client = new GameClient(socket, camera, ctx);
 				
 				canvas.addEventListener("mousemove", function(e) {
-					var mouseX = e.clientX;
-					var mouseY = e.clientY;
+					var mouseX = e.offsetX;
+					var mouseY = e.offsetY;
 					
 					client.onMouseMove(mouseX, mouseY);
 				});
 				
 				canvas.addEventListener("mousedown", function(e) {
-					var mouseX = e.clientX;
-					var mouseY = e.clientY;
+					var mouseX = e.offsetX;
+					var mouseY = e.offsetY;
 					
 					client.onMouseDown(mouseX, mouseY);
 				});
 				
 				canvas.addEventListener("mouseup", function(e) {
-					var mouseX = e.clientX;
-					var mouseY = e.clientY;
+					var mouseX = e.offsetX;
+					var mouseY = e.offsetY;
 					
 					client.onMouseUp(mouseX, mouseY);
 				});

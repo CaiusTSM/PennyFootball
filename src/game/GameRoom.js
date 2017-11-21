@@ -16,8 +16,6 @@ var GameRoom = function(io, uuid, username1, username2) {
 	
 	this.gameProc = child_process.fork(gameProcFile);
 	
-	this.game = new Game(this.io, this.uuid);
-	this.game.init();
 	this.running = false;
 	
 	this.clients = [];
@@ -46,14 +44,14 @@ var GameRoom = function(io, uuid, username1, username2) {
 	this.onConnect = function(socket) {
 		if (this.clients.length < 2) {
 			if (this.clients.length === 0) {
-				this.clients.push(new GameClient(this.game, this.uuid, socket, this.username1));
+				this.clients.push(new GameClient(this, this.uuid, socket, this.username1));
 			}
 			else {
 				if (this.clients[0].username === this.username1) {
-					this.clients.push(new GameClient(this.game, this.uuid, socket, this.username2));
+					this.clients.push(new GameClient(this, this.uuid, socket, this.username2));
 				}
 				else {
-					this.clients.push(new GameClient(this.game, this.uuid, socket, this.username1));
+					this.clients.push(new GameClient(this, this.uuid, socket, this.username1));
 				}
 			}
 		}
@@ -86,19 +84,19 @@ var GameRoom = function(io, uuid, username1, username2) {
 		return false;
 	}.bind(this);
 	
-	this.onMove = function(data) {
-		
+	this.onMove = function(socket, move) {
+		this.gameProc.send({ input: move });
 	}.bind(this);
 	
 	this.onTimeout = function() {
-		if (this.clients.length === 0) {
+		if (this.clients.length < 2) {
 			this.endGame();
 		}
 	}.bind(this);
 	
 	this.gameProc.on('message', function(msg) {
 		for (var i = 0; i < this.clients.length; ++i) {
-			this.clients[i].socket.emit("state", msg);
+			this.clients[i].sendState(msg);
 		}
 	}.bind(this));
 };

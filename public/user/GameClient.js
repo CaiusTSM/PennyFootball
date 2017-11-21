@@ -52,6 +52,9 @@ var GameClient = function(socket, camera, ctx) {
 	this.moveStartY = 0.0;
 	this.moveEndX = 0.0;
 	this.moveEndY = 0.0;
+	this.moveId = 0;
+	this.moveStrength = 0.0;
+	this.moveAngle = 0.0;
 	
 	this.onJoin = function() {
 		console.log("Joined");
@@ -61,8 +64,11 @@ var GameClient = function(socket, camera, ctx) {
 	}.bind(this);
 	
 	this.onState = function(data) {
-		if (this.stateBuffer.length < 100) {
+		if (this.stateBuffer.length < 20) {
 			this.stateBuffer.splice(0, 0, data);
+		}
+		else {
+			this.stateBuffer.splice(5, 5);
 		}
 	}.bind(this);
 	
@@ -124,6 +130,7 @@ var GameClient = function(socket, camera, ctx) {
 	}.bind(this);
 	
 	this.interpolate = function(currentState, targetState, percent) {
+		/*
 		for (var i = 0; i < currentState.boxes.length; ++i) {
 			var box = currentState.boxes[i];
 			
@@ -136,15 +143,36 @@ var GameClient = function(socket, camera, ctx) {
 				}
 			}
 		}
+		*/
+		
+		for (var i = 0; i < currentState.coins.length; ++i) {
+			var coin = currentState.coins[i];
+			
+			for (var j = 0; j < targetState.coins.length; ++j) {
+				var targetCoin = targetState.coins[i];
+				
+				if (coin.id === targetCoin.id) {
+					coin.renderX = lerp(coin.position.x, targetCoin.position.x, percent);
+					coin.renderY = lerp(coin.position.y, targetCoin.position.y, percent);
+				}
+			}
+		}
 	};
 	
 	this.render = function(ctx, scale) {
+		ctx.fillStyle = "#222222";
+		ctx.fillRect(0, 0, this.camera.canvas.width, this.camera.canvas.height);
+		
 		if (this.stateBuffer.length > 0) {
+			/*
 			for (var i = 0; i < this.stateBuffer[this.stateBuffer.length - 1].boxes.length; ++i) {
 				var box = this.stateBuffer[this.stateBuffer.length - 1].boxes[i];
 				
 				// Fill color (not border color)
 				ctx.fillStyle = "#aaaaaa";
+				
+				// Border width
+				ctx.lineWidth = 1;
 				
 				// Push transformation matrix
 				ctx.save();
@@ -161,25 +189,101 @@ var GameClient = function(socket, camera, ctx) {
 				// Pop transformation matrix
 				ctx.restore();
 			}
+			*/
+			
+			for (var i = 0; i < this.stateBuffer[this.stateBuffer.length - 1].coins.length; ++i) {
+				var coin = this.stateBuffer[this.stateBuffer.length - 1].coins[i];
+				
+				// Fill color (not border color)
+				if (i === 0) {
+					ctx.fillStyle = "#CC1111";
+				}
+				else {
+					ctx.fillStyle = "#aaaaaa";
+				}
+				
+				// Border width
+				ctx.lineWidth = 1;
+				
+				// Push transformation matrix
+				ctx.save();
+				
+				ctx.translate(coin.renderX * scale, coin.renderY * scale);
+				ctx.rotate(coin.angle);
+				// Multiply by scale to convert from meters to pixels
+				ctx.scale(scale, scale);
+				
+				ctx.beginPath();
+				ctx.arc(0, 0, coin.radius, 0, Math.PI * 2.0, false);
+				
+				// Pop transformation matrix
+				ctx.restore();
+				
+				ctx.fill();
+			}
+			
+			for (var i = 0; i < this.stateBuffer[this.stateBuffer.length - 1].walls.length; ++i) {
+				var wall = this.stateBuffer[this.stateBuffer.length - 1].walls[i];
+				
+				// Fill color (not border color)
+				ctx.fillStyle = "#aaccaa";
+				
+				// Border width
+				ctx.lineWidth = 1;
+				
+				// Push transformation matrix
+				ctx.save();
+				
+				ctx.translate(wall.renderX * scale, wall.renderY * scale);
+				// Multiply by scale to convert from meters to pixels
+				ctx.scale(scale, scale);
+				
+				ctx.fillRect(-wall.width / 2.0, -wall.height / 2.0, wall.width, wall.height);
+				
+				// Pop transformation matrix
+				ctx.restore();
+			}
 		}
 		
 		if (this.mouseDown === true && this.makingMove === true) {
-			ctx.fillStyle = "#aaaaaa";
+			if (this.moveStrength <= 0.33) {
+				ctx.strokeStyle = "#11FF11";
+			}
+			else if (this.moveStrength <= 0.66) {
+				ctx.strokeStyle = "#FFFF11";
+			}
+			else {
+				ctx.strokeStyle = "#FF1111";
+			}
+			ctx.lineWidth = 2;
 			
 			ctx.beginPath();
 			ctx.moveTo(this.moveStartX, this.moveStartY);
-			ctx.lineTo(this.moveEndX, this.moveEndX);
+			ctx.lineTo(this.moveEndX, this.moveEndY);
 			ctx.stroke();
 		}
 	};
 	
 	this.makeMove = function() {
-		
+		this.socket.emit("input", { id: this.moveId, strength: this.moveStrength, angle: this.moveAngle });
+		console.log("Sent input.");
 	};
 	
 	this.onMouseMove = function(mouseX, mouseY) {
 		this.mouseX = mouseX;
 		this.mouseY = mouseY;
+		
+		if (this.mouseDown === true && this.makingMove === true) {
+			this.moveEndX = this.mouseX;
+			this.moveEndY = this.mouseY;
+			
+			var dx = this.moveEndX - this.moveStartX;
+			var dy = this.moveEndY - this.moveStartY;
+			var distance = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
+			
+			this.moveStrength = Math.min(distance / (this.camera.min * 0.33), 1.0);
+			this.moveAngle = Math.atan2(dy / distance, -dx / distance) + Math.PI;
+		}
 	}.bind(this);
 	
 	this.onMouseDown = function(mouseX, mouseY) {
@@ -193,6 +297,41 @@ var GameClient = function(socket, camera, ctx) {
 			this.makingMove = true;
 			this.moveStartX = this.mouseX;
 			this.moveStartY = this.mouseY;
+			this.moveEndX = this.mouseX;
+			this.moveEndY = this.mouseY;
+			
+			if (this.stateBuffer.length >= 2) {
+				var state = this.stateBuffer[this.stateBuffer.length - 1];
+				var x = this.moveStartX;
+				var y = this.moveStartY;
+				
+				/*
+				for (var i = 0; i < state.boxes.length; ++i) {
+					var box = state.boxes[i];
+					
+					if (Math.abs(box.renderX * this.scale - x) <= box.width / 2.0 * this.scale && Math.abs(box.renderY * this.scale - y) <= box.height / 2.0 * this.scale) {
+						this.moveId = box.id;
+						break;
+					}
+				}
+				*/
+				
+				for (var i = 0; i < state.coins.length; ++i) {
+					var coin = state.coins[i];
+					
+					if (Math.abs(coin.renderX * this.scale - x) <= coin.radius * this.scale && Math.abs(coin.renderY * this.scale - y) <= coin.radius * this.scale) {
+						this.moveId = coin.id;
+						break;
+					}
+				}
+			}
+			
+			var dx = this.moveEndX - this.moveStartX;
+			var dy = this.moveEndY - this.moveStartY;
+			var distance = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
+			
+			this.moveStrength = Math.min(distance / (this.camera.min * 0.33), 1.0);
+			this.moveAngle = Math.atan2(dy / distance, -dx / distance) + Math.PI;
 		}
 	}.bind(this);
 	
@@ -203,11 +342,18 @@ var GameClient = function(socket, camera, ctx) {
 		this.mouseWasDown = this.mouseDown;
 		this.mouseDown = false;
 		
-		if (this.mouseDown === false && this.mouseDown === true) {
+		if (this.mouseDown === false && this.mouseWasDown === true) {
 			this.makingMove = false;
 			this.moveEndX = this.mouseX;
 			this.moveEndY = this.mouseY;
 			
+			var dx = this.moveEndX - this.moveStartX;
+			var dy = this.moveEndY - this.moveStartY;
+			var distance = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2));
+			
+			this.moveStrength = Math.min(distance / (this.camera.min * 0.33), 1.0);
+			this.moveAngle = Math.atan2(dy / distance, -dx / distance) + Math.PI;
+
 			this.makeMove();
 		}
 	}.bind(this);

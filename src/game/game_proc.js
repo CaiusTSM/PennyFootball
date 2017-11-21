@@ -8,4 +8,7 @@ process.on('message', function(msg) {
 		game.start();
 		console.log("Started Game...");
 	}
+	else if ("input" in msg) {
+		game.pushInput(msg.input);
+	}
 });
