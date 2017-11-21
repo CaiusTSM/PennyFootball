@@ -72,6 +72,10 @@ var GameClient = function(socket, camera, ctx) {
 		}
 	}.bind(this);
 	
+	this.onGameOver = function(data) {
+		window.location.href = "/user/home.html";
+	}.bind(this);
+	
 	this.join = function(gameId) {
 		this.gameId = gameId;
 		
@@ -243,6 +247,25 @@ var GameClient = function(socket, camera, ctx) {
 				// Pop transformation matrix
 				ctx.restore();
 			}
+			
+			var state = this.stateBuffer[this.stateBuffer.length - 1];
+			
+			ctx.fillStyle = "#AA1111";
+			ctx.font = "20px Arial";
+			ctx.fillText("Score: " + state.scoreA, 10, 30);
+			
+			ctx.fillStyle = "#5555AA";
+			ctx.font = "20px Arial";
+			ctx.fillText("Score: " + state.scoreB, 10, 60);
+			
+			ctx.fillStyle = "#FFFFFF";
+			ctx.font = "20px Arial";
+			if (state.turn === true) {
+				ctx.fillText("Turn: Your Turn", 110, 30);
+			}
+			else {
+				ctx.fillText("Turn: Other Player's Turn", 110, 30);
+			}
 		}
 		
 		if (this.mouseDown === true && this.makingMove === true) {
@@ -360,4 +383,5 @@ var GameClient = function(socket, camera, ctx) {
 	
 	this.socket.on("state", this.onState);
 	this.socket.on("joined", this.onJoin);
+	this.socket.on("game over", this.onGameOver);
 };

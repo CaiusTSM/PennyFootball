@@ -81,8 +81,7 @@ var Coin = function(world, radius, density, position) {
 	// Normally this would contain like velocity dampening and stuff (especially for pennies so they slow down over time / simulate friction on the table)
 	// But I left it blank for this box demo since we don't need any of that stuff for it
 	this.bodyDef = {
-		linearDamping : 0.5,
-		angularDamping : 0.5
+		linearDamping : 0.5
 	};
 	
 	this.radius = radius;
@@ -115,6 +114,13 @@ var Game = function() {
 	*/
 	this.walls = [];
 	this.coins = [];
+	
+	this.scoreA = 0;
+	this.scoreB = 0;
+	
+	this.turn = true;
+	
+	this.makingMove = false;
 	
 	this.inputQueue = [];
 	
@@ -193,19 +199,29 @@ var Game = function() {
 	
 	// Game logic goes here
 	this.tick = function(dt) {
-		for (var i = 0; i < this.inputQueue.length; ++i) {
-			var input = this.inputQueue[i].input;
+		if (this.isResting() === true) {
+			if (this.makingMove === true) {
+				this.turn = !this.turn;
+				this.makingMove = false;
+			}
 			
-			var id = input.id;
-			var strength = input.strength;
-			var angle = input.angle;
-			
-			for (var i = 0; i < this.coins.length; ++i) {
-				var coin = this.coins[i];
-				
-				if (coin.id === id && i === 0) {
-					coin.body.applyLinearImpulse(planck.Vec2(strength * 30.0 * Math.cos(angle), -strength * 30.0 * Math.sin(angle)), coin.body.getWorldPoint(coin.body.getPosition()), true);
-					break;
+			if (this.makingMove === false) {
+				for (var i = 0; i < this.inputQueue.length; ++i) {
+					var input = this.inputQueue[i].input;
+					
+					var id = input.id;
+					var strength = input.strength;
+					var angle = input.angle;
+					
+					for (var i = 0; i < this.coins.length; ++i) {
+						var coin = this.coins[i];
+						
+						if (coin.id === id && i === 0) {
+							coin.body.applyLinearImpulse(planck.Vec2(strength * 30.0 * Math.cos(angle), -strength * 30.0 * Math.sin(angle)), coin.body.getWorldPoint(coin.body.getPosition()), true);
+							this.makingMove = true;
+							break;
+						}
+					}
 				}
 			}
 		}
@@ -213,9 +229,37 @@ var Game = function() {
 		this.inputQueue = [];
 		
 		this.world.step(this.timestep);
+		
+		if (this.coins.length > 0) {
+			var ball = this.coins[0];
+			
+			var pos = ball.body.getPosition();
+			
+			if (pos.x <= 1.3) {
+				this.scoreA += 1;
+				this.setup();
+			}
+			else if (pos.x >= 38.7) {
+				this.scoreB += 1;
+				this.setup();
+			}
+		}
+		
+		if (this.scoreA >= 3) {
+			process.send("player A wins");
+		}
+		else if (this.scoreB >= 3) {
+			process.send("player B wins");
+		}
 	};
 	
 	this.setup = function() {
+		this.turn = !this.turn;
+		
+		for (var i = 0; i < this.walls.length; ++i) {
+			this.world.destroyBody(this.walls[i].body);
+		}
+		
 		this.walls = [];
 		
 		// Left backplate
@@ -248,6 +292,10 @@ var Game = function() {
 		// Bottom pillar
 		this.walls.push(new Wall(this.world, planck.Vec2(20.0, 17.5), 1.0, 5.0));
 		
+		for (var i = 0; i < this.coins.length; ++i) {
+			this.world.destroyBody(this.coins[i].body);
+		}
+		
 		this.coins = [];
 		
 		// The soccer ball
@@ -272,6 +320,20 @@ var Game = function() {
 		
 		// Goal keeper 2
 		this.coins.push(new Coin(this.world, 1.0, 1.0, planck.Vec2(38.0, 7.5 / 2.0 + 5.0 + 2.5 / 2.0)));
+	};
+	
+	this.isResting = function() {
+		for (var i = 0; i < this.coins.length; ++i) {
+			var coin = this.coins[i];
+			
+			var vel = coin.body.getLinearVelocity();
+			
+			if (Math.abs(vel.x) > 0.08 || Math.abs(vel.y) > 0.08) {
+				return false;
+			}
+		}
+		
+		return true;
 	};
 	
 	this.pushInput = function(input) {
@@ -341,6 +403,9 @@ var Game = function() {
 		
 		return {
 			time: this.tickCount,
+			turn: this.turn,
+			scoreA: this.scoreA,
+			scoreB: this.scoreB,
 			walls: walls,
 			coins: coins
 		};

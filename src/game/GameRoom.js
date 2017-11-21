@@ -35,7 +35,7 @@ var GameRoom = function(io, uuid, username1, username2) {
 		}
 		
 		for (var i = 0; i < this.clients.length; ++i) {
-			this.clients[i].terminate();
+			this.clients[i].terminate(this.winner);
 		}
 		
 		console.log("Game room closed: " + this.uuid);
@@ -44,14 +44,14 @@ var GameRoom = function(io, uuid, username1, username2) {
 	this.onConnect = function(socket) {
 		if (this.clients.length < 2) {
 			if (this.clients.length === 0) {
-				this.clients.push(new GameClient(this, this.uuid, socket, this.username1));
+				this.clients.push(new GameClient(this, this.uuid, socket, this.username1, true));
 			}
 			else {
 				if (this.clients[0].username === this.username1) {
-					this.clients.push(new GameClient(this, this.uuid, socket, this.username2));
+					this.clients.push(new GameClient(this, this.uuid, socket, this.username2, false));
 				}
 				else {
-					this.clients.push(new GameClient(this, this.uuid, socket, this.username1));
+					this.clients.push(new GameClient(this, this.uuid, socket, this.username1, true));
 				}
 			}
 		}
@@ -65,18 +65,12 @@ var GameRoom = function(io, uuid, username1, username2) {
 			if (client.socket.id === socket.id) {
 				client.disconnect();
 				
-				if (this.winner === 0) {
-					if (i === 0) {
-						this.winner = 2;
-					}
-					else if (i === 1) {
-						this.winner = 1;
-					}
-					
-					//this.endGame();
+				this.clients.splice(i, 1);
+				
+				if (this.clients.length === 0) {
+					this.endGame();
 				}
 				
-				this.clients.splice(i, 1);
 				return true;
 			}
 		}
@@ -95,8 +89,19 @@ var GameRoom = function(io, uuid, username1, username2) {
 	}.bind(this);
 	
 	this.gameProc.on('message', function(msg) {
-		for (var i = 0; i < this.clients.length; ++i) {
-			this.clients[i].sendState(msg);
+		if (msg === "player A wins") {
+			this.winner = 1;
+			this.endGame();
+		}
+		else if (msg === "player B wins") {
+			this.winner = 2;
+			this.endGame();
+		}
+		else {
+			for (var i = 0; i < this.clients.length; ++i) {
+				this.clients[i].turn = msg.turn;
+				this.clients[i].sendState(msg);
+			}
 		}
 	}.bind(this));
 };
