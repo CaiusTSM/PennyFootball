@@ -37,19 +37,19 @@
 				register($('#registerUsername').val(), $('#registerPassword').val(), function(status, data) {
 					if (status === 200) {
 						console.log("Register success...");
-						$('#registerForm').append("<br><font color='green'>Register success.</font>");
 						
-						// login($('#registerUsername').val(), $('#registerPassword').val(), function(status, data) {
-						// 	if (status === 200) {
-						// 		console.log("Login success...");
-						// 		window.location = "/user/home.html";
-						// 	}
-						// 	else if (status === 401) {
-						// 		console.log("Login failure...");
-						// 		$('#loginForm').append("<br><font color='red'>Incorrect username/password.</font>");
-						// 	}
-						// } Doesn't seem to work yet.
+						login($('#registerUsername').val(), $('#registerPassword').val(), function(status, data) {
+							if (status === 200) {
+								console.log("Login success...");
+								window.location = "/user/home.html";
+							}
+							else if (status === 401) {
+								console.log("Login failure...");
+								$('#loginForm').append("<br><font color='red'>Incorrect username/password.</font>");
+							}
+						});
 					}
+					
 					else if (status === 400) {
 						console.log("Register failure...");
 						$('#registerForm').append("<br><font color='red'>Invalid username/password.</font>");
@@ -93,57 +93,208 @@
 			}
 		</script>
 		<style>
-			.button1{
-				height:20px;
-				padding-left: 20px;
-				padding-right:20px;
+			body {
+				margin: 0;
+				background: #444444;
 			}
 			
-			.credentials{
-				float: left;
+			.wrapper {
+				position: absolute;
+				top: 50%;
+  				transform: translateY(-50%);
+				width: 100%;
 			}
 			
-			.credentials section{
-				width: 30%;
-				float: left;
-				padding: 40px;
+			.grid {
+				display: grid;
+				width: 800px;
+				margin: 0 auto;
+				grid-template-columns: 1fr 1fr;
+				grid-template-rows: auto auto auto;
+				grid-template-areas: 
+			      "title title"
+			      "login regis"
+			      "foot  foot";
+			    padding-bottom: 20px;
+			    border-radius: 20px;
+			    background: #D8D8D8;
 			}
 			
+			.login-grid {
+				display: grid;
+				grid-area: login;
+				grid-template-columns: auto;
+				grid-template-rows: 110px auto;
+				grid-template-areas:
+				"logd"
+				"logi";
+				/*padding: 10px 10x 0px 20px;*/
+				padding-top: 10px;
+				margin-left: 20px;
+				margin-right: 10px;
+				border-radius: 20px;
+				background: #7FBDC6;
+			}
+			
+			.reg-grid {
+				display: grid;
+				grid-area: regis;
+				grid-template-columns: auto;
+				grid-template-rows: 110px auto;
+				grid-template-areas:
+				"regd"
+				"regi";
+				padding-top: 10px;
+				margin-left: 10px;
+				margin-right: 20px;
+				border-radius: 20px;
+				background: #7FBDC6;
+			}
+			
+			.title {
+				grid-area: title;
+				margin: 20px;
+				padding: 0;
+				border-radius: 20px;
+				text-align: center;
+				background: #5CC66E;
+			}
+			
+			.login-desc {
+				grid-area: logd;
+				text-align: center;
+			}
+			
+			.login {
+				grid-area: logi;
+				text-align: center;
+			}
+			
+			.reg-desc {
+				grid-area: regd;
+				text-align: center;
+			}
+			
+			.register {
+				grid-area: regi;
+				text-align: center;
+			}
+			
+			.footer {
+				grid-area: foot;
+				margin: 20px 20px 0px 20px;
+				padding: 2px;
+				text-align: right;
+				border-radius: 10px;
+				background: #5CC66E;
+				
+			}
+			
+			.button {
+			    background-color: #C17F15; 
+			    border: none;
+			    margin-top: 15px;
+			    border-radius: 10px;
+			    color: white;
+			    padding: 5px 10px;
+			    text-align: center;
+			    text-decoration: none;
+			    display: inline-block;
+			    font-size: 12pt;
+			}
+			
+			h1 {
+				font-family: 'Helvetica', 'Arial';
+				font-size: 30pt;
+			}
+			
+			h2 {
+				font-family: 'Helvetica', 'Arial';
+				font-size: 20pt;
+			}
+			
+			p1 {
+				font-family: 'Helvetica', 'Arial';
+				font-size: 16pt;
+			}
+			
+			p2 {
+				/*color: #D8D8D8;*/
+				font-family: 'Helvetica', 'Arial';
+				font-size: 10pt;
+				padding: 5px;
+			}
+			
+			input[type=text] {
+				font-family: 'Helvetica', 'Arial';
+				width: 50%;
+				padding: 2px 0px;
+				margin: 2px 0px;
+			}
+			
+			input[type=password] {
+				font-family: 'Helvetica', 'Arial';
+				width: 50%;
+				padding: 2px 0px;
+				margin: 2px 0px;
+			}
+
 		</style>
 	</head>
 	<body>
-		<header>
-	      <div>
-	        <div>
-	          <h1>Penny Football</h1>
-	        </div>
-	      </div>
-	    </header>
-	    
-	    <section class="credentials">
-	    	
-		    <section id="login">
-		    	<div>
-		    		<h1>Login</h1>
-		    		<form id="loginForm">
-		    			<input id="loginUsername" type="text" placeholder="Username"><br>
-		    			<input id="loginPassword" type="password" placeholder="Password"><br>
-		    			<input type="submit" class="button1" value="Login"></button>
-		    		</form>
+		<div class="wrapper">
+		    <div class="grid">
+		    	
+		    	<div class="title">
+		    		<h1>Penny Football</h1>
+		    		<h2>A Software Project by Team 2</h2>
 		    	</div>
-		    </section>
-		    
-		    <section id="register">
-		    	<div>
-		    		<h1>Register</h1>
-		    		<form id="registerForm">
-		    			<input id="registerUsername" type="text" placeholder="Username"><br>
-		    			<input id="registerPassword" type="password" placeholder="Password"><br>
-		    			<input type="submit" class"button1" value="Register"></button>
-		    		</form>
+		    	
+		    	<div class="login-grid">
+			    	<div class="login-desc">
+			    		<p1>
+			    			If you have an account,<br/>
+			    			please enter your username<br/>
+			    			and password.
+			    		</p1>
+			    	</div>
+			    	
+			    	<div class="login">
+			    		<h2>Login</h2>
+			    		<form id="loginForm">
+			    			<input id="loginUsername" type="text" placeholder="Username"><br>
+			    			<input id="loginPassword" type="password" placeholder="Password"><br>
+			    			<input type="submit" class="button" value="Login"></button>
+			    		</form>
+			    	</div>
 		    	</div>
-		    </section>
-		    
-	    </section>
+		    	
+		    	<div class="reg-grid">
+			    	<div class="reg-desc">
+			    		<p1>
+			    			If you do not have an account,<br/>
+			    			please enter a unique username<br/>
+			    			and password of at least 8<br/>
+			    			characters each.
+			    		</p1>
+			    	</div>
+		    	
+			    	<div class="register">
+			    		<h2>Register</h2>
+			    		<form id="registerForm">
+			    			<input id="registerUsername" type="text" placeholder="Username"><br>
+			    			<input id="registerPassword" type="password" placeholder="Password"><br>
+			    			<input type="submit" class="button" value="Register"></button>
+			    		</form>
+			    	</div>
+		    	</div>
+		    	
+		    	<div class="footer">
+		    		<p2>
+		    			Part of Processes for Oriented Software Design
+		    		</p2>
+		    	</div>
+		    </div>
+		</div>
 	</body>
 </html>
